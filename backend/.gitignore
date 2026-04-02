@@ -1,0 +1,17 @@
+# Local environment — contains real secrets, never commit
+src/main/resources/application-local.properties
+
+# Maven build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+*.class
+
+# OS noise
+.DS_Store
+Thumbs.db

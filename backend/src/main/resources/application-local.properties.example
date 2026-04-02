@@ -1,0 +1,18 @@
+# -------------------------------------------------------
+# Pantry Tracker – LOCAL profile example
+#
+# Copy this file to application-local.properties and fill
+# in your real values. That file is gitignored.
+# -------------------------------------------------------
+
+# MongoDB Atlas M0 free-tier connection string
+spring.data.mongodb.uri=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/pantrytracker?retryWrites=true&w=majority
+
+# JWT secret – use a long random string (32+ chars)
+jwt.secret=replace-with-a-long-random-secret-string-here
+
+# Access token lifetime: 15 minutes in milliseconds
+jwt.expiration=900000
+
+# Refresh token lifetime: 30 days in milliseconds
+jwt.refresh-expiration=2592000000
