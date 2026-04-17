@@ -1,6 +1,6 @@
 # Pantry Tracker
 
-A camera-first household inventory app. Scan barcodes continuously like a physical scanner, track consumption levels, get expiry warnings, and see which items on your shopping list are on deal this week.
+A camera-first household inventory app. Scan barcodes continuously like a physical scanner, track consumption levels, get expiry warnings, and manage a smart shopping list.
 
 Built with Spring Boot 3 + React as a standalone POC — designed to become a module in a larger personal life management system.
 
@@ -10,13 +10,11 @@ Built with Spring Boot 3 + React as a standalone POC — designed to become a mo
 
 - **Continuous barcode scanning** — stream-based ZXing detection, no button press per item; audible beep + green flash on each scan
 - **Open Food Facts lookup** — automatic product name, brand, and image from barcode
-- **Inventory by location** — Fridge, Freezer, Pantry, Sundries; compact tile grid with location filter tabs
+- **Inventory by location** — Fridge, Freezer, Pantry, Sundries; items grouped by location then by name
 - **Consumption tracking** — 0–100% per package; multi-package support (two cartons of milk tracked separately)
-- **Expiry date warnings** — colour-coded by urgency (red ≤1d, orange 2–3d, yellow 4–7d); badge in nav
-- **Staple items + shopping list** — mark a product as a staple once; it appears on the list automatically when all packages reach 0
+- **Expiry date warnings** — items expiring within 3 days highlighted on the Dashboard
+- **Staple items + shopping list** — mark a product as a staple once; it appears on the shopping list automatically when all packages reach 0
 - **Cross-brand substitution** — scanning Garant Lättmjölk clears Arla Mellanmjölk from the shopping list via suffix/keyword matching
-- **Deal integration** — weekly grocery deals from Swedish chains via Tjek API; matched to shopping list items; no API key required
-- **Nearest store for deals** — browser geolocation passed to backend; deals show the closest specific store (e.g. "ICA Kvantum Hötorget")
 - **Smart location memory** — remembers where you put each product; auto-fills location on next scan
 
 ---
@@ -41,7 +39,6 @@ Built with Spring Boot 3 + React as a standalone POC — designed to become a mo
 - Java 21+
 - Node 18+
 - MongoDB Atlas account (free M0 tier is sufficient)
-- A Tjek API dealer ID list (or use the defaults in `application.properties`)
 
 ---
 
@@ -56,22 +53,27 @@ cd pantry-tracker
 
 **2. Configure backend secrets**
 
-Create `backend/src/main/resources/application-local.properties`:
+Create `backend/src/main/resources/application-local.properties` (gitignored — see `.example` for the template):
 
 ```properties
-spring.data.mongodb.uri=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/pantrytracker?appName=<cluster>
-jwt.secret=<64-char hex string>
+spring.data.mongodb.uri=mongodb+srv://pantryuser:<pass>@winterunmute.7hloc.mongodb.net/pantrytracker?appName=Winterunmute
+jwt.secret=<string — must be ≥ 32 characters>
 jwt.expiration=900000
 jwt.refresh-expiration=2592000000
+spoonacular.api-key=<key>
 ```
+
+> **Note:** The MongoDB user is `pantryuser`, not the cluster owner account. NordVPN (or any VPN) must be **OFF** — the Atlas IP allowlist blocks VPN exit node addresses.
 
 **3. Configure frontend**
 
-Create `frontend/.env.local`:
+Create `frontend/.env.local` (gitignored):
 
 ```
 VITE_API_BASE_URL=http://localhost:8080
 ```
+
+Without this, the Axios client falls back to `http://localhost:8080`, so local dev works either way. A production build requires the env var set to the live backend URL at build time.
 
 **4. Run the backend**
 
@@ -90,7 +92,7 @@ npm install
 npm run dev
 ```
 
-Frontend starts on `http://localhost:5173` (increments to 5174/5175 if busy).
+Frontend starts on `http://localhost:5173` (increments to 5174/5175 if busy; all three are pre-allowed in CORS config).
 
 ---
 
@@ -107,15 +109,12 @@ DELETE /api/inventory/{id}            Delete item
 POST   /api/barcode                   Look up product by barcode (Open Food Facts)
                                       body: { barcode } → { productName, brand, imageUrl }
 
-GET    /api/deals                     Search for deals at Swedish grocery chains
-                                      params: query, lat (optional), lng (optional)
-                                      returns: { hasDeal, deals: [ { heading, price, currency,
-                                                storeName, imageUrl, runTill, nearbyStoreLabel } ] }
-
 POST   /api/auth/register             Create user → { accessToken, refreshToken }
 POST   /api/auth/login                Authenticate → { accessToken, refreshToken }
 POST   /api/auth/refresh              body: { refreshToken } → new token pair
 ```
+
+> **Auth note:** All routes are currently `permitAll()`. JWT tokens are issued and validated but not enforced. One line change in `SecurityConfig.java` enables enforcement.
 
 ---
 
@@ -125,24 +124,36 @@ POST   /api/auth/refresh              body: { refreshToken } → new token pair
 pantry-tracker/
 ├── backend/
 │   └── src/main/java/com/pantrytracker/inventory/
-│       ├── controller/       REST endpoints
-│       ├── service/          Business logic + external API calls
-│       ├── repository/       Spring Data MongoDB interfaces
-│       ├── model/            MongoDB documents (InventoryItem, User)
-│       ├── dto/              Request/response records
-│       └── security/         JWT filter, SecurityConfig, CORS
+│       ├── controller/       InventoryController, BarcodeController, AuthController
+│       ├── service/          InventoryService, BarcodeService, AuthService
+│       ├── repository/       InventoryRepository, UserRepository (Spring Data MongoDB)
+│       ├── model/            InventoryItem, User
+│       ├── dto/              AuthRequest/Response, BarcodeRequest/Response
+│       └── security/         JwtUtil, JwtAuthFilter, SecurityConfig
 │   └── src/main/resources/
-│       ├── application.properties          Base config (committed)
-│       └── application-local.properties    Secrets (gitignored)
+│       ├── application.properties              Base config (committed)
+│       ├── application-local.properties.example  Secret template
+│       └── application-local.properties        Secrets (gitignored — must create)
 │
 └── frontend/
     └── src/
-        ├── api/              Typed API client functions
-        ├── components/       Scanner, StagingList, Navbar
+        ├── api/              client.ts (Axios + auth interceptors), inventory.ts,
+        │                     barcode.ts, auth.ts
+        ├── components/       Navbar, BarcodeScanner, StagingList
         ├── pages/            Dashboard, Inventory, Scan, ShoppingList, Add, Login
         ├── utils/            locationMemory.ts, nameMatch.ts
-        └── types/            Shared TypeScript types
+        └── types/            Shared TypeScript types (index.ts)
 ```
+
+---
+
+## Data Model Notes
+
+- `consumptionLevel = 0` — consumed/hidden. Items stay in MongoDB; they appear on the shopping list if `isStaple = true`.
+- `isStaple` — marks a product as a household staple. Shopping list = all packages of a product have `consumptionLevel ≤ 0` AND `isStaple = true`.
+- `restockThreshold` — stored (default 0.25) but not yet used in filtering. Shopping list triggers at `consumptionLevel ≤ 0` only.
+- `item.name` can be null for items scanned before Open Food Facts integration. Frontend guards everywhere with `` item.name ?? `Product ${item.barcode}` ``.
+- `location` — frontend sends lowercase (`"fridge"`), backend stores as enum (`FRIDGE`). Jackson `accept-case-insensitive-enums=true` handles the mapping.
 
 ---
 
@@ -152,25 +163,25 @@ pantry-tracker/
 
 On `/scan` in dev mode (`npm run dev`), a yellow panel provides:
 - **9 barcode buttons** — inject preset Swedish products directly into the staging list, bypassing Open Food Facts
-- **"🏠 Seed household data"** — POSTs 38 realistic Swedish household items across all four locations; useful for testing the inventory grid view
+- **"🏠 Seed household data"** — POSTs 38 realistic Swedish household items across all four locations; useful for populating the inventory view
 
-**MongoDB Atlas connection**
+**Scanning dedup**
 
-NordVPN (or any VPN) must be **OFF** — Atlas IP allowlist blocks VPN exit nodes.
+The same barcode within 3000 ms is ignored (prevents double-scanning a single item). Each new scan plays a 1046 Hz beep and flashes the viewfinder green for 300 ms.
 
-MongoDB user is `pantryuser` (not the cluster owner account).
+**Location memory**
 
-**Auth**
-
-JWT is fully implemented but routes are currently `permitAll()`. To enforce auth, change one line in `SecurityConfig.java` — see `CLAUDE.md` for details.
+`localStorage` key `"pantry-location-memory"` maps product name → last used location. On scan, `lookupLocation()` checks for an exact match then falls back to `namesMatch()` (suffix/keyword overlap) for cross-brand recall.
 
 ---
 
 ## Roadmap
 
-This app is Phase 1 of a personal life management system. Planned future modules:
+This app is Phase 1 of a personal life management system. Planned features:
 
-- **Phase 2** — Auth enforcement + deployment (Railway backend, GitHub Pages frontend)
-- **Phase 3** — Expiry date OCR via Tesseract.js (photo-capture mode after staging confirm)
-- **Phase 4** — LLM kitchen assistant ("vad kan jag laga med det som finns hemma?")
-- **Phase 5** — Matsvinn analytics (waste tracking, expiry trends, cost over time)
+- **Deals integration** — weekly grocery deals from Swedish chains via Tjek API; matched to shopping list items with nearest-store geolocation (backend stubs in `application.properties`; service not yet implemented)
+- **Recipe search** — inventory-aware recipe suggestions via TheMealDB + Spoonacular (not yet implemented)
+- **Auth enforcement** — one-line change in `SecurityConfig.java`; planned alongside deployment
+- **Deployment** — Railway (backend), GitHub Pages (frontend); not yet configured
+- **Expiry date OCR** — Tesseract.js (installed in `package.json`, not yet wired up); photo-capture after staging confirm
+- **Matsvinn analytics** — waste tracking, expiry trends, cost over time
