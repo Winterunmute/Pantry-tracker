@@ -3,19 +3,35 @@
 ## Project Plan
 
 Read ~/CLAUDE.md and ~/projects/zero-system/CLAUDE.md first.
-Read ~/sync/pantry-tracker/onboarding/system_design.md,
-module_map.md, constraints.md and unknowns.md before doing anything.
+Read ~/projects/pantry-tracker/onboarding/module_map.md and
+~/projects/pantry-tracker/onboarding/system_design.md before
+making any changes.
 
-Using the onboarding documents as the source of truth, update the
-Pantry Tracker project documentation to accurately reflect the current
-state of the codebase. The goal is that a new developer (or Claude
-session) can understand the project immediately from the docs alone.
+Add predictive recipe caching to Pantry Tracker to reduce
+Spoonacular API usage. Currently Spoonacular is called on demand.
+Instead, implement a daily cache pre-fetch that spreads API calls
+over time and serves most searches from MongoDB cache.
 
-Update or create:
-- README.md — project overview, setup instructions, feature list,
-  tech stack, how to run locally
-- Any existing docs that are outdated or missing information
+Changes needed:
 
-Do not change any source code. Documentation only.
-Success: README.md is accurate, complete, and reflects what was
-found in the onboarding analysis.
+1. MongoDB cache collection — add a RecipeCache document storing
+ingredient set hash as key, Spoonacular response as value, TTL 7 days
+
+2. SpoonacularController / RecipeService — check cache by ingredient
+hash before calling Spoonacular API. Only call API on cache miss.
+Store result in cache after fetch.
+
+3. Daily pre-fetch job — Spring @Scheduled task at 02:00. Reads
+inventory items with consumptionLevel > 0, builds top 10 ingredient
+combinations prioritizing staples and items nearing expiry,
+pre-fetches and caches results. Max 50 API points per run.
+
+4. Cache hit/miss logging so effectiveness is visible.
+
+Constraints:
+- Do not change Recipes.tsx frontend
+- Keep existing SpoonacularController endpoints working
+- Max 50 Spoonacular points per pre-fetch run
+
+Success: recipes tab no longer calls Spoonacular if inventory
+has not changed since last pre-fetch.

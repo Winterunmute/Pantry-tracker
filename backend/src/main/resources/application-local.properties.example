@@ -16,3 +16,6 @@ jwt.expiration=900000
 
 # Refresh token lifetime: 30 days in milliseconds
 jwt.refresh-expiration=2592000000
+
+# Spoonacular API key (free tier: 150 points/day)
+spoonacular.api.key=your-spoonacular-api-key-here

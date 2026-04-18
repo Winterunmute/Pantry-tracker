@@ -12,4 +12,6 @@ public interface InventoryRepository extends MongoRepository<InventoryItem, Stri
     List<InventoryItem> findByLocation(InventoryItem.Location location);
 
     List<InventoryItem> findByBarcode(String barcode);
+
+    List<InventoryItem> findByConsumptionLevelGreaterThan(double consumptionLevel);
 }
