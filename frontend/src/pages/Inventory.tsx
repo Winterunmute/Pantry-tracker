@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getInventory, deleteItem, updateItem } from '../api/inventory'
+import { getInventory, updateItem } from '../api/inventory'
 import type { InventoryItem, Location } from '../types'
 
 const LOCATIONS: Location[] = ['fridge', 'freezer', 'pantry', 'sundries']
@@ -50,7 +50,7 @@ function groupByName(items: InventoryItem[]): NameGroup[] {
   }))
 }
 
-// ── Quick-update modal ──────────────────────────────────────────────────────
+// ── Quick-update modal ───────────────────────────────────────────────────────
 
 function QuickUpdateModal({
   item,
@@ -59,7 +59,7 @@ function QuickUpdateModal({
   onUpdate,
 }: {
   item: InventoryItem
-  siblings: InventoryItem[]  // other active packages with the same name
+  siblings: InventoryItem[]
   onClose: () => void
   onUpdate: (patch: Partial<InventoryItem>) => void
 }) {
@@ -85,7 +85,6 @@ function QuickUpdateModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5 space-y-4">
-        {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="font-semibold text-gray-900 leading-snug">
@@ -105,7 +104,6 @@ function QuickUpdateModal({
           <div className="py-4 text-center text-green-600 font-semibold text-sm">{flashMsg}</div>
         ) : (
           <>
-            {/* Level bar + selector */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Level</p>
               <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -132,7 +130,6 @@ function QuickUpdateModal({
               </div>
             </div>
 
-            {/* Staple toggle */}
             <button
               onClick={() => onUpdate({ isStaple: !item.isStaple })}
               className={[
@@ -151,156 +148,69 @@ function QuickUpdateModal({
   )
 }
 
-// ── Package card (used inside multi-package groups) ─────────────────────────
+// ── Item tile ────────────────────────────────────────────────────────────────
 
-function PackageCard({
-  item,
-  isActive,
-  onDelete,
-  isDeleting,
-  onTap,
-}: {
-  item: InventoryItem
-  isActive: boolean
-  onDelete: (id: string) => void
-  isDeleting: boolean
-  onTap: () => void
-}) {
-  const level = item.consumptionLevel ?? 1
-  const daysUntilExpiry = item.expiryDate
-    ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null
-  const expiryColor =
-    daysUntilExpiry === null      ? 'text-gray-400'
-    : daysUntilExpiry <= 0        ? 'text-red-600 font-semibold'
-    : daysUntilExpiry <= 3        ? 'text-orange-500 font-semibold'
-    :                               'text-gray-500'
+function ItemTile({ group, onTap }: { group: NameGroup; onTap: () => void }) {
+  const level = group.items[0].consumptionLevel ?? 1
+  const count = group.items.length
 
   return (
-    <li
+    <button
       onClick={onTap}
-      className="relative overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm cursor-pointer active:bg-gray-50 transition-colors"
+      className="relative w-full text-left bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden active:scale-[0.97] transition-transform focus:outline-none focus:ring-2 focus:ring-brand-400"
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className={[
-            'text-xs font-semibold px-1.5 py-0.5 rounded-md shrink-0',
-            isActive ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-500',
-          ].join(' ')}>
-            {isActive ? 'Active' : 'Unopened'}
-          </span>
-          <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-            <span>Qty: {item.quantity}</span>
-            {item.expiryDate && (
-              <span className={expiryColor}>
-                Exp: {item.expiryDate}
-                {daysUntilExpiry !== null && daysUntilExpiry <= 3 && daysUntilExpiry >= 0
-                  ? ` (${daysUntilExpiry}d)` : ''}
+      <div className="p-3 pb-2">
+        {/* Top badge row — only rendered when there's content */}
+        {(count > 1 || group.isAnyStaple) && (
+          <div className="flex items-center justify-between mb-1.5">
+            {count > 1 ? (
+              <span className="text-xs font-semibold bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5 leading-none">
+                ×{count}
               </span>
+            ) : (
+              <span />
+            )}
+            {group.isAnyStaple && (
+              <span className="text-xs text-amber-400 leading-none">⭐</span>
             )}
           </div>
-        </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(item.id) }}
-          disabled={isDeleting}
-          className="shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-40"
-          aria-label="Delete package"
-        >
-          🗑
-        </button>
+        )}
+
+        {/* Product name — 2 line max */}
+        <p className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight">
+          {group.displayName}
+        </p>
+
+        {/* Brand */}
+        {group.brand && (
+          <p className="text-xs text-gray-400 truncate mt-0.5">{group.brand}</p>
+        )}
       </div>
-      <div className="h-1 w-full bg-gray-100">
+
+      {/* Consumption bar — flush to bottom */}
+      <div className="h-1.5 w-full bg-gray-100">
         <div
           className={`h-full transition-all duration-300 ${levelColor(level)}`}
-          style={{ width: `${level * 100}%` }}
+          style={{ width: `${Math.max(level * 100, 3)}%` }}
         />
       </div>
-    </li>
+    </button>
   )
 }
 
-// ── Single-item card (for name groups with only one package) ────────────────
+// ── Page ─────────────────────────────────────────────────────────────────────
 
-function ItemCard({
-  item,
-  onDelete,
-  isDeleting,
-  onTap,
-}: {
-  item: InventoryItem
-  onDelete: (id: string) => void
-  isDeleting: boolean
-  onTap: () => void
-}) {
-  const level = item.consumptionLevel ?? 1
-  const daysUntilExpiry = item.expiryDate
-    ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null
-  const expiryColor =
-    daysUntilExpiry === null      ? 'text-gray-400'
-    : daysUntilExpiry <= 0        ? 'text-red-600 font-semibold'
-    : daysUntilExpiry <= 3        ? 'text-orange-500 font-semibold'
-    :                               'text-gray-500'
-
-  return (
-    <li
-      onClick={onTap}
-      className="relative overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm cursor-pointer active:bg-gray-50 transition-colors"
-    >
-      <div className="flex items-start justify-between gap-3 px-4 py-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            {item.isStaple && <span className="text-amber-400 leading-none">⭐</span>}
-            <p className="font-medium text-gray-900 truncate">
-              {item.name ?? `Product ${item.barcode}`}
-            </p>
-          </div>
-          {item.brand && <p className="text-xs text-gray-400 mt-0.5">{item.brand}</p>}
-          <div className="flex items-center gap-3 mt-1 flex-wrap">
-            <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-            {item.expiryDate && (
-              <span className={`text-xs ${expiryColor}`}>
-                Exp: {item.expiryDate}
-                {daysUntilExpiry !== null && daysUntilExpiry <= 3 && daysUntilExpiry >= 0
-                  ? ` (${daysUntilExpiry}d)` : ''}
-              </span>
-            )}
-          </div>
-        </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(item.id) }}
-          disabled={isDeleting}
-          className="shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-300 hover:text-red-400 active:text-red-600 transition-colors disabled:opacity-40"
-          aria-label={`Delete ${item.name ?? `Product ${item.barcode}`}`}
-        >
-          🗑
-        </button>
-      </div>
-      <div className="h-1 w-full bg-gray-100">
-        <div
-          className={`h-full transition-all duration-300 ${levelColor(level)}`}
-          style={{ width: `${level * 100}%` }}
-        />
-      </div>
-    </li>
-  )
-}
-
-// ── Page ────────────────────────────────────────────────────────────────────
+type TabId = 'all' | Location
 
 export default function Inventory() {
-  const [search, setSearch] = useState('')
+  const [search, setSearch]       = useState('')
+  const [activeTab, setActiveTab] = useState<TabId>('all')
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null)
   const queryClient = useQueryClient()
 
   const { data: items = [], isLoading, isError } = useQuery({
     queryKey: ['inventory'],
     queryFn: getInventory,
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteItem,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] }),
   })
 
   const updateMutation = useMutation({
@@ -316,8 +226,8 @@ export default function Inventory() {
     updateMutation.mutate({ id: activeItem.id, patch: updated })
   }
 
-  // Items with consumptionLevel === 0 are hidden (finished packages)
-  const active = items.filter((item) => (item.consumptionLevel ?? 1) !== 0)
+  // consumptionLevel === 0 items are consumed — always hidden
+  const active = items.filter((i) => (i.consumptionLevel ?? 1) !== 0)
 
   const filtered = active.filter((item) => {
     const q = search.toLowerCase()
@@ -328,21 +238,44 @@ export default function Inventory() {
     )
   })
 
-  const groupedByLocation = LOCATIONS.map((loc) => ({
-    location: loc,
-    nameGroups: groupByName(filtered.filter((i) => i.location?.toLowerCase() === loc)),
-  })).filter(({ nameGroups }) => nameGroups.length > 0)
+  // Name groups per location
+  const groupsByLocation = Object.fromEntries(
+    LOCATIONS.map((loc) => [
+      loc,
+      groupByName(filtered.filter((i) => i.location?.toLowerCase() === loc)),
+    ]),
+  ) as Record<Location, NameGroup[]>
 
-  // Siblings = other active packages with same name (for modal context)
+  const totalGroups = LOCATIONS.reduce((n, loc) => n + groupsByLocation[loc].length, 0)
+
+  const TABS: { id: TabId; label: string; count: number }[] = [
+    { id: 'all',      label: 'Alla',        count: totalGroups },
+    { id: 'fridge',   label: '🧊 Fridge',   count: groupsByLocation.fridge.length },
+    { id: 'freezer',  label: '❄️ Freezer',  count: groupsByLocation.freezer.length },
+    { id: 'pantry',   label: '🥫 Pantry',   count: groupsByLocation.pantry.length },
+    { id: 'sundries', label: '🧴 Sundries', count: groupsByLocation.sundries.length },
+  ]
+
+  // Sections to render in the grid
+  const sections =
+    activeTab === 'all'
+      ? LOCATIONS
+          .filter((loc) => groupsByLocation[loc].length > 0)
+          .map((loc) => ({ location: loc, groups: groupsByLocation[loc] }))
+      : groupsByLocation[activeTab as Location].length > 0
+        ? [{ location: activeTab as Location, groups: groupsByLocation[activeTab as Location] }]
+        : []
+
   const siblings = activeItem
     ? active.filter(
-        (i) => i.id !== activeItem.id &&
-        (i.name?.toLowerCase().trim() ?? '') === (activeItem.name?.toLowerCase().trim() ?? ''),
+        (i) =>
+          i.id !== activeItem.id &&
+          (i.name?.toLowerCase().trim() ?? '') === (activeItem.name?.toLowerCase().trim() ?? ''),
       )
     : []
 
   return (
-    <div className="space-y-5 py-4 pb-24">
+    <div className="space-y-4 py-4 pb-24">
       <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
 
       {/* Search */}
@@ -357,54 +290,66 @@ export default function Inventory() {
         />
       </div>
 
+      {/* Location tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-4 px-4 scrollbar-none">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={[
+              'flex-none flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors',
+              activeTab === tab.id
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50',
+            ].join(' ')}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span
+                className={[
+                  'text-xs rounded-full px-1.5 py-0.5 leading-none font-semibold',
+                  activeTab === tab.id
+                    ? 'bg-white/25 text-white'
+                    : 'bg-gray-100 text-gray-500',
+                ].join(' ')}
+              >
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* States */}
       {isLoading && <p className="text-center text-gray-400 py-12">Loading inventory…</p>}
-      {isError && <p className="text-center text-red-500 py-12">Failed to load inventory.</p>}
-      {!isLoading && !isError && filtered.length === 0 && (
-        <p className="text-center text-gray-400 py-12">
-          {search ? 'No items match your search.' : 'Your pantry is empty — start scanning!'}
-        </p>
+      {isError   && <p className="text-center text-red-500  py-12">Failed to load inventory.</p>}
+
+      {!isLoading && !isError && sections.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
+          <p className="text-4xl mb-3">📦</p>
+          <p className="text-sm font-medium">
+            {search ? 'No items match your search.' : 'Nothing here — start scanning!'}
+          </p>
+        </div>
       )}
 
-      {groupedByLocation.map(({ location, nameGroups }) => (
-        <section key={location}>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2">
-            {locationLabel[location]} · {nameGroups.reduce((n, g) => n + g.items.length, 0)}
+      {/* Grid sections */}
+      {sections.map(({ location, groups }) => (
+        <section key={location} className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            {locationLabel[location]}
+            <span className="ml-1.5 font-normal normal-case tracking-normal text-gray-300">
+              · {groups.length}
+            </span>
           </h2>
-          <div className="space-y-3">
-            {nameGroups.map((group) =>
-              group.items.length === 1 ? (
-                // Single package — plain card with product name
-                <ul key={group.key}>
-                  <ItemCard
-                    item={group.items[0]}
-                    onDelete={(id) => deleteMutation.mutate(id)}
-                    isDeleting={deleteMutation.isPending && deleteMutation.variables === group.items[0].id}
-                    onTap={() => setActiveItem(group.items[0])}
-                  />
-                </ul>
-              ) : (
-                // Multiple packages — group header + compact package cards
-                <div key={group.key} className="space-y-1">
-                  <div className="flex items-center gap-1.5 px-1">
-                    {group.isAnyStaple && <span className="text-amber-400 text-sm leading-none">⭐</span>}
-                    <p className="text-sm font-semibold text-gray-800 truncate">{group.displayName}</p>
-                    <span className="text-xs text-gray-400 shrink-0">· {group.items.length} packages</span>
-                  </div>
-                  <ul className="space-y-1 pl-3 border-l-2 border-gray-100">
-                    {group.items.map((item, idx) => (
-                      <PackageCard
-                        key={item.id}
-                        item={item}
-                        isActive={idx === 0}
-                        onDelete={(id) => deleteMutation.mutate(id)}
-                        isDeleting={deleteMutation.isPending && deleteMutation.variables === item.id}
-                        onTap={() => setActiveItem(item)}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              )
-            )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+            {groups.map((group) => (
+              <ItemTile
+                key={group.key}
+                group={group}
+                onTap={() => setActiveItem(group.items[0])}
+              />
+            ))}
           </div>
         </section>
       ))}

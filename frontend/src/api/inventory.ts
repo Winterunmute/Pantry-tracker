@@ -12,6 +12,11 @@ export async function getShoppingList(): Promise<InventoryItem[]> {
   return data
 }
 
+export async function getExpiringItems(): Promise<InventoryItem[]> {
+  const { data } = await apiClient.get<InventoryItem[]>('/api/inventory/expiring')
+  return data
+}
+
 export async function createItem(item: CreateItemPayload): Promise<InventoryItem> {
   const { data } = await apiClient.post<InventoryItem>('/api/inventory', item)
   return data

@@ -6,6 +6,7 @@ import Scan from './pages/Scan'
 import Add from './pages/Add'
 import Login from './pages/Login'
 import ShoppingList from './pages/ShoppingList'
+import Recipes from './pages/Recipes'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/scan" element={<Scan />} />
           <Route path="/add" element={<Add />} />
           <Route path="/shopping-list" element={<ShoppingList />} />
+          <Route path="/recipes" element={<Recipes />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </main>

@@ -10,6 +10,55 @@ import type { InventoryItem, StagingItem, Location } from '../types'
 
 type Status = 'idle' | 'confirming' | 'done' | 'error'
 
+// ── Dev seeder ────────────────────────────────────────────────────────────────
+
+const SEED_ITEMS = [
+  // FRIDGE
+  { name: 'Arla Mellanmjölk 1.5%',      brand: 'Arla',       location: 'fridge',   quantity: 1, consumptionLevel: 0.7  },
+  { name: 'Arla Färsk Filmjölk',         brand: 'Arla',       location: 'fridge',   quantity: 1, consumptionLevel: 0.4  },
+  { name: 'Arla Smör',                   brand: 'Arla',       location: 'fridge',   quantity: 1, consumptionLevel: 0.6  },
+  { name: 'Philadelphia Original',       brand: 'Mondelez',   location: 'fridge',   quantity: 1, consumptionLevel: 0.3  },
+  { name: 'Kavli Mjukost',               brand: 'Kavli',      location: 'fridge',   quantity: 1, consumptionLevel: 0.8  },
+  { name: 'Ägg 12-pack',                 brand: 'Kronägg',    location: 'fridge',   quantity: 1, consumptionLevel: 0.5  },
+  { name: 'Valio Ost 28%',               brand: 'Valio',      location: 'fridge',   quantity: 1, consumptionLevel: 0.6  },
+  { name: 'Charkuteri Skinka',           brand: 'Tulip',      location: 'fridge',   quantity: 1, consumptionLevel: 0.2  },
+  { name: 'Fazer Leverpostej',           brand: 'Fazer',      location: 'fridge',   quantity: 1, consumptionLevel: 0.9  },
+  { name: 'Felix Ketchup',               brand: 'Felix',      location: 'fridge',   quantity: 1, consumptionLevel: 0.5  },
+  { name: 'Hellmanns Majonnäs',          brand: 'Hellmanns',  location: 'fridge',   quantity: 1, consumptionLevel: 0.4  },
+  { name: 'OLW Sourcreme & Onion Dip',   brand: 'OLW',        location: 'fridge',   quantity: 1, consumptionLevel: 0.7  },
+  { name: 'Tropicana Apelsinjuice',      brand: 'Tropicana',  location: 'fridge',   quantity: 1, consumptionLevel: 0.3  },
+  { name: 'Oatly Havredryck',            brand: 'Oatly',      location: 'fridge',   quantity: 2, consumptionLevel: 1.0  },
+  // FREEZER
+  { name: 'GB Vaniljglass',              brand: 'GB',         location: 'freezer',  quantity: 1, consumptionLevel: 0.5  },
+  { name: 'Findus Ärtor',                brand: 'Findus',     location: 'freezer',  quantity: 2, consumptionLevel: 0.8  },
+  { name: 'Findus Fiskpinnar',           brand: 'Findus',     location: 'freezer',  quantity: 1, consumptionLevel: 0.6  },
+  { name: 'Linas Matkasse Köttfärssås',  brand: 'Linas',      location: 'freezer',  quantity: 1, consumptionLevel: 1.0  },
+  { name: 'Dafgård Pannkakor',           brand: 'Dafgård',    location: 'freezer',  quantity: 1, consumptionLevel: 0.4  },
+  { name: 'Picard Pommes Frites',        brand: 'Picard',     location: 'freezer',  quantity: 1, consumptionLevel: 0.7  },
+  // PANTRY
+  { name: 'Barilla Spaghetti 500g',      brand: 'Barilla',    location: 'pantry',   quantity: 2, consumptionLevel: 0.9  },
+  { name: 'Risoni Pasta',                brand: 'Garant',     location: 'pantry',   quantity: 1, consumptionLevel: 0.5  },
+  { name: 'Basmatiris 1kg',              brand: 'Uncle Bens', location: 'pantry',   quantity: 1, consumptionLevel: 0.7  },
+  { name: 'Heinz Tomatsås',              brand: 'Heinz',      location: 'pantry',   quantity: 2, consumptionLevel: 0.6  },
+  { name: 'Zeta Kokosmjölk',             brand: 'Zeta',       location: 'pantry',   quantity: 3, consumptionLevel: 1.0  },
+  { name: 'Zeta Krossade Tomater',       brand: 'Zeta',       location: 'pantry',   quantity: 2, consumptionLevel: 1.0  },
+  { name: 'Kalles Kaviar',               brand: 'Abba',       location: 'pantry',   quantity: 1, consumptionLevel: 0.4  },
+  { name: 'Marabou Mjölkchoklad',        brand: 'Marabou',    location: 'pantry',   quantity: 1, consumptionLevel: 0.6  },
+  { name: 'OLW Cheez Doodles',           brand: 'OLW',        location: 'pantry',   quantity: 1, consumptionLevel: 0.8  },
+  { name: 'Estrella Sourcreme & Onion',  brand: 'Estrella',   location: 'pantry',   quantity: 1, consumptionLevel: 0.5  },
+  { name: 'Nescafé Gold',                brand: 'Nescafé',    location: 'pantry',   quantity: 1, consumptionLevel: 0.7  },
+  { name: 'Lipton Teabags 100-pack',     brand: 'Lipton',     location: 'pantry',   quantity: 1, consumptionLevel: 0.9  },
+  { name: 'Gevalia Mellanrost',          brand: 'Gevalia',    location: 'pantry',   quantity: 1, consumptionLevel: 0.3  },
+  // SUNDRIES
+  { name: 'Lambi Toapapper 8-pack',      brand: 'Lambi',      location: 'sundries', quantity: 2, consumptionLevel: 1.0  },
+  { name: 'Vanish Fläckborttagning',     brand: 'Vanish',     location: 'sundries', quantity: 1, consumptionLevel: 0.5  },
+  { name: 'Ariel Tvättmedel',            brand: 'Ariel',      location: 'sundries', quantity: 1, consumptionLevel: 0.4  },
+  { name: 'Fairy Diskmedel',             brand: 'Fairy',      location: 'sundries', quantity: 1, consumptionLevel: 0.6  },
+  { name: 'Blend-a-Med Tandkräm',        brand: 'Blend-a-Med',location: 'sundries', quantity: 2, consumptionLevel: 0.8  },
+] as const
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const DEV_BARCODES = [
   // Original 4
   { label: 'Arla Mellanmjölk',   barcode: '7310500144511', brand: 'Arla'         },
@@ -29,7 +78,29 @@ export default function Scan() {
   const [status, setStatus] = useState<Status>('idle')
   const [lookingUp, setLookingUp] = useState<string | null>(null)
   const [shoppingToasts, setShoppingToasts] = useState<string[]>([])
+  const [seeding, setSeeding] = useState(false)
   const queryClient = useQueryClient()
+
+  async function seedHouseholdData() {
+    setSeeding(true)
+    for (const item of SEED_ITEMS) {
+      await createItem({
+        name: item.name,
+        brand: item.brand,
+        barcode: null,
+        quantity: item.quantity,
+        location: item.location as Location,
+        expiryDate: null,
+        imageUrl: null,
+        consumptionLevel: item.consumptionLevel,
+        isStaple: false,
+        restockThreshold: 0.25,
+      })
+    }
+    await queryClient.invalidateQueries({ queryKey: ['inventory'] })
+    setSeeding(false)
+    alert(`✅ ${SEED_ITEMS.length} varor tillagda!`)
+  }
 
   function buildStagingItem(
     barcode: string,
@@ -187,6 +258,15 @@ export default function Scan() {
                 <span className="ml-1 font-mono font-normal opacity-60">{barcode}</span>
               </button>
             ))}
+          </div>
+          <div className="mt-2 pt-2 border-t border-yellow-300">
+            <button
+              onClick={seedHouseholdData}
+              disabled={seeding}
+              className="rounded-lg bg-yellow-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-yellow-700 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {seeding ? '⏳ Seeding…' : '🏠 Seed household data'}
+            </button>
           </div>
         </div>
       )}

@@ -28,6 +28,11 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getAll());
     }
 
+    @GetMapping("/expiring")
+    public ResponseEntity<List<InventoryItem>> getExpiring() {
+        return ResponseEntity.ok(inventoryService.getExpiring());
+    }
+
     @GetMapping("/shopping-list")
     public ResponseEntity<List<InventoryItem>> getShoppingList() {
         List<InventoryItem> result = inventoryService.getShoppingList();

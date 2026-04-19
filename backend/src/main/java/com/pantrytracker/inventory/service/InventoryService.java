@@ -7,6 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.beans.factory.annotation.Value;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -18,6 +21,9 @@ import java.util.stream.Collectors;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
+
+    @Value("${inventory.expiry-warning-days:7}")
+    private int expiryWarningDays;
 
     public List<InventoryItem> getAll() {
         return inventoryRepository.findAll();
@@ -67,6 +73,17 @@ public class InventoryService {
                         .filter(InventoryItem::isStaple)
                         .min(Comparator.comparingDouble(InventoryItem::getConsumptionLevel))
                         .orElse(group.get(0)))
+                .collect(Collectors.toList());
+    }
+
+    public List<InventoryItem> getExpiring() {
+        LocalDate today = LocalDate.now();
+        LocalDate cutoff = today.plusDays(expiryWarningDays);
+        return inventoryRepository.findAll().stream()
+                .filter(i -> i.getExpiryDate() != null)
+                .filter(i -> !i.getExpiryDate().isAfter(cutoff))
+                .filter(i -> i.getConsumptionLevel() > 0)
+                .sorted(Comparator.comparing(InventoryItem::getExpiryDate))
                 .collect(Collectors.toList());
     }
 
