@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git check-ignore:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(DEALERS=\"ca802A%2C9cb4wA%2Cc371GA%2CcJPBvX%2C63eeoD%2C6c28SD%2CIHDhNs%2C03a7b3%2Ca987sA\")",
+      "Bash(python3 -c \":*)",
+      "Bash(netstat -ano)",
+      "Bash(mvn compile:*)",
+      "Bash(tasklist:*)",
+      "Bash(wmic process:*)",
+      "Bash(kill -9 1228)",
+      "Bash(cmd /c \"taskkill /F /PID 1228\")",
+      "Bash(cmd /c \"netstat -ano | findstr :8080 | findstr LISTENING\" 2>&1)",
+      "Bash(python3:*)",
+      "Bash(cmd /c \"netstat -ano\")",
+      "Bash(cmd /c \"taskkill /F /PID 1228 2>&1\")",
+      "Bash(powershell -Command \"Stop-Process -Id 1228 -Force; Start-Sleep 1; Test-NetConnection -ComputerName localhost -Port 8080 -WarningAction SilentlyContinue | Select-Object TcpTestSucceeded\" 2>&1)",
+      "Bash(findstr \":8080\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c \"taskkill /PID 12108 /F\" 2>&1)",
+      "Skill(update-config)"
+    ]
+  }
+}
