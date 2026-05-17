@@ -80,10 +80,9 @@ public class InventoryService {
         LocalDate today = LocalDate.now();
         LocalDate cutoff = today.plusDays(expiryWarningDays);
         return inventoryRepository.findAll().stream()
-                .filter(i -> i.getExpiryDate() != null)
-                .filter(i -> !i.getExpiryDate().isAfter(cutoff))
+                .filter(i -> i.getExpiryDate() != null && !i.getExpiryDate().isAfter(cutoff))
                 .filter(i -> i.getConsumptionLevel() > 0)
-                .sorted(Comparator.comparing(InventoryItem::getExpiryDate))
+                .sorted(Comparator.comparing(InventoryItem::getExpiryDate, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 
