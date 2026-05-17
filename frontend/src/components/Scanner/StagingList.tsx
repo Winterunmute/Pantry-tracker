@@ -10,12 +10,10 @@ interface StagingListProps {
 
 function StagingItemRow({
   item,
-  index,
   onChange,
   onRemove,
 }: {
   item: StagingItem
-  index: number
   onChange: (updated: StagingItem) => void
   onRemove: () => void
 }) {
@@ -128,7 +126,6 @@ export default function StagingList({ items, onConfirm, onChange }: StagingListP
           <StagingItemRow
             key={`${item.barcode}-${index}`}
             item={item}
-            index={index}
             onChange={(updated) => updateItem(index, updated)}
             onRemove={() => removeItem(index)}
           />

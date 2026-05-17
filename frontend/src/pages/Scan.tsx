@@ -162,6 +162,8 @@ export default function Scan() {
             expiryDate: staged.expiryDate,
             imageUrl: staged.imageUrl,
             isStaple: inheritStaple,
+            consumptionLevel: 1.0,
+            restockThreshold: 0.25,
           })
         }),
       )

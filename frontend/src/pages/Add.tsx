@@ -64,6 +64,9 @@ export default function Add() {
       location: form.location,
       expiryDate: form.expiryDate || null,
       imageUrl: null,
+      consumptionLevel: 1.0,
+      isStaple: false,
+      restockThreshold: 0.25,
     })
   }
 

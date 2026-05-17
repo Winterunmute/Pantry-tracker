@@ -18,9 +18,9 @@ import type {
   MealSummary,
   MealDetail,
   PersonalRecipe,
-  RecipeIngredient,
   CreatePersonalRecipePayload,
 } from '../api/recipes'
+import type { InventoryItem } from '../types'
 import { extractIngredients } from '../utils/extractIngredients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -225,7 +225,7 @@ interface RecipeDetailViewProps {
 function RecipeDetailView({
   detail, userSet, onBack, onAddMissing, addMissingDone, onSave, saveDone, isSaving,
 }: RecipeDetailViewProps) {
-  const { present, missing } = analyzeRecipe(detail, userSet)
+  const { present: _present, missing } = analyzeRecipe(detail, userSet)
 
   const steps = parseInstructions(detail.instructions)
 
