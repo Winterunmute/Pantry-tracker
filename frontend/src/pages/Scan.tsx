@@ -151,9 +151,12 @@ export default function Scan() {
 
       await Promise.all(
         stagingItems.map((staged) => {
+          console.log('[Scan] staged.barcode:', staged.barcode)
+          console.log('[Scan] existingInventory.length:', existingInventory.length)
           const existingByBarcode = staged.barcode
             ? existingInventory.find((i) => i.barcode === staged.barcode)
             : null
+          console.log('[Scan] barcode lookup result:', existingByBarcode ?? null)
 
           if (existingByBarcode) {
             console.log(`[Scan] Barcode ${staged.barcode} matched existing item "${existingByBarcode.name}" (id: ${existingByBarcode.id}, qty: ${existingByBarcode.quantity}) → incrementing by ${staged.quantity}`)
