@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import BarcodeScanner from '../components/Scanner/BarcodeScanner'
 import StagingList from '../components/Scanner/StagingList'
 import { lookupBarcode } from '../api/barcode'
-import { createItem, getShoppingList, updateItem } from '../api/inventory'
+import { createItem, getInventory, getShoppingList, updateItem } from '../api/inventory'
 import { lookupLocation, rememberLocation } from '../utils/locationMemory'
 import { namesMatch } from '../utils/nameMatch'
 import type { InventoryItem, StagingItem, Location } from '../types'
@@ -144,8 +144,10 @@ export default function Scan() {
     if (stagingItems.length === 0) return
     setStatus('confirming')
     try {
-      // Inherit isStaple from existing inventory items with the same name
-      const existingInventory = queryClient.getQueryData<InventoryItem[]>(['inventory']) ?? []
+      // Fetch fresh inventory from API to ensure barcode matching is accurate
+      console.log('[Scan] Fetching fresh inventory for barcode duplicate check…')
+      const existingInventory = await getInventory()
+      console.log('[Scan] Inventory fetched:', existingInventory.map(i => ({ id: i.id, name: i.name, barcode: i.barcode, quantity: i.quantity })))
 
       await Promise.all(
         stagingItems.map((staged) => {
@@ -154,11 +156,14 @@ export default function Scan() {
             : null
 
           if (existingByBarcode) {
+            console.log(`[Scan] Barcode ${staged.barcode} matched existing item "${existingByBarcode.name}" (id: ${existingByBarcode.id}, qty: ${existingByBarcode.quantity}) → incrementing by ${staged.quantity}`)
             return updateItem(existingByBarcode.id, {
               ...existingByBarcode,
               quantity: existingByBarcode.quantity + staged.quantity,
             })
           }
+
+          console.log(`[Scan] Barcode ${staged.barcode} not found in inventory → creating new item "${staged.productName}"`)
 
           const sameNameInInventory = existingInventory.filter(
             (i) => i.name && namesMatch(i.name, staged.productName),
