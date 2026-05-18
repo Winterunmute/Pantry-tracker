@@ -42,7 +42,7 @@ export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
     scanner
       .start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 280, height: 120 } },
+        { fps: 10, qrbox: (w, h) => ({ width: w, height: h }) },
         (decodedText) => {
           const now = Date.now()
           const lastSeen = seenRef.current.get(decodedText)
