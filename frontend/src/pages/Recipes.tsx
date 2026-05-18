@@ -1022,6 +1022,7 @@ export default function Recipes() {
   const [saveDoneIds, setSaveDoneIds]           = useState<Set<string>>(new Set())
   const [isSaving, setIsSaving]                 = useState(false)
   const [addMissingDetailDone, setAddMissingDetailDone] = useState(false)
+  const [copied, setCopied] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: items = [] } = useQuery({
@@ -1095,6 +1096,18 @@ export default function Recipes() {
     setSelectedSaved(null)
   }
 
+  async function handleCopyPrompt() {
+    const inventory = await getInventory()
+    const ingredients = inventory
+      .filter(i => i.location?.toLowerCase() !== 'sundries')
+      .map(i => `${i.quantity}x ${i.name}`)
+      .join(', ')
+    const prompt = `Jag har följande ingredienser hemma: ${ingredients}. Vad kan jag laga för mat? Ge mig några recept.`
+    await navigator.clipboard.writeText(prompt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   const tabs: { value: RecipeTab; label: string }[] = [
     { value: 'inventory', label: 'Mina ingredienser 🥫' },
     { value: 'search',    label: 'Sök recept 🔍' },
@@ -1147,9 +1160,21 @@ export default function Recipes() {
   // ── Render main page ────────────────────────────────────────────────────────
   return (
     <div className="space-y-4 py-4 pb-24">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Recept 🍳</h1>
-        <p className="text-sm text-gray-500 mt-1">Hitta recept baserat på vad du har hemma.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Recept 🍳</h1>
+          <p className="text-sm text-gray-500 mt-1">Hitta recept baserat på vad du har hemma.</p>
+        </div>
+        <button
+          onClick={handleCopyPrompt}
+          className={`shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+            copied
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+          }`}
+        >
+          {copied ? '✅ Kopierat!' : '📋 Kopiera ingredienser'}
+        </button>
       </div>
 
       {/* Tabs */}
