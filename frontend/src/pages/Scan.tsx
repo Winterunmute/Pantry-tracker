@@ -244,7 +244,7 @@ export default function Scan() {
       <BarcodeScanner onDetected={handleDetected} />
 
       {/* Dev-only barcode simulator */}
-      {import.meta.env.DEV && (
+      {true && (
         <div className="rounded-xl border-2 border-dashed border-yellow-400 bg-yellow-50 p-3">
           <p className="text-xs font-bold text-yellow-700 uppercase tracking-widest mb-2">
             ⚠ Dev only — barcode simulator
