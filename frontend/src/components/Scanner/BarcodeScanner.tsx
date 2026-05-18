@@ -32,6 +32,7 @@ function playBeep() {
 export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const seenRef = useRef<Map<string, number>>(new Map())
+  const lastScanRef = useRef<number>(0)
   const [flash, setFlash] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,8 +46,10 @@ export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
         { fps: 10, qrbox: (w, h) => ({ width: w, height: h }) },
         (decodedText) => {
           const now = Date.now()
+          if (now - lastScanRef.current < 1000) return
           const lastSeen = seenRef.current.get(decodedText)
           if (lastSeen && now - lastSeen < DEBOUNCE_MS) return
+          lastScanRef.current = now
           seenRef.current.set(decodedText, now)
           playBeep()
           setFlash(true)
