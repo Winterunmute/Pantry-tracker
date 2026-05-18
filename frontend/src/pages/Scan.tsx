@@ -149,6 +149,17 @@ export default function Scan() {
 
       await Promise.all(
         stagingItems.map((staged) => {
+          const existingByBarcode = staged.barcode
+            ? existingInventory.find((i) => i.barcode === staged.barcode)
+            : null
+
+          if (existingByBarcode) {
+            return updateItem(existingByBarcode.id, {
+              ...existingByBarcode,
+              quantity: existingByBarcode.quantity + staged.quantity,
+            })
+          }
+
           const sameNameInInventory = existingInventory.filter(
             (i) => i.name && namesMatch(i.name, staged.productName),
           )
