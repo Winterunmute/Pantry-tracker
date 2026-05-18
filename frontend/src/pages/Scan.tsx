@@ -122,19 +122,34 @@ export default function Scan() {
   }
 
   function addToStaging(barcode: string, productName: string, brand: string, imageUrl: string | null) {
-    setStagingItems((prev) => [...prev, buildStagingItem(barcode, productName, brand, imageUrl)])
+    setStagingItems((prev) => {
+      const existing = prev.find((i) => i.barcode === barcode)
+      if (existing) {
+        return prev.map((i) => i.barcode === barcode ? { ...i, quantity: i.quantity + 1 } : i)
+      }
+      return [...prev, buildStagingItem(barcode, productName, brand, imageUrl)]
+    })
   }
 
   const handleDetected = useCallback(async (barcode: string) => {
     setLookingUp(barcode)
     try {
       const result = await lookupBarcode(barcode)
-      setStagingItems((prev) => [
-        ...prev,
-        buildStagingItem(barcode, result.productName, result.brand, result.imageUrl),
-      ])
+      setStagingItems((prev) => {
+        const existing = prev.find((i) => i.barcode === barcode)
+        if (existing) {
+          return prev.map((i) => i.barcode === barcode ? { ...i, quantity: i.quantity + 1 } : i)
+        }
+        return [...prev, buildStagingItem(barcode, result.productName, result.brand, result.imageUrl)]
+      })
     } catch {
-      setStagingItems((prev) => [...prev, buildStagingItem(barcode, null, null, null)])
+      setStagingItems((prev) => {
+        const existing = prev.find((i) => i.barcode === barcode)
+        if (existing) {
+          return prev.map((i) => i.barcode === barcode ? { ...i, quantity: i.quantity + 1 } : i)
+        }
+        return [...prev, buildStagingItem(barcode, null, null, null)]
+      })
     } finally {
       setLookingUp(null)
     }
