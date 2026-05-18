@@ -6,7 +6,7 @@ import { lookupBarcode } from '../api/barcode'
 import { createItem, getInventory, getShoppingList, updateItem } from '../api/inventory'
 import { lookupLocation, rememberLocation } from '../utils/locationMemory'
 import { namesMatch } from '../utils/nameMatch'
-import type { InventoryItem, StagingItem, Location } from '../types'
+import type { StagingItem, Location } from '../types'
 
 type Status = 'idle' | 'confirming' | 'done' | 'error'
 
