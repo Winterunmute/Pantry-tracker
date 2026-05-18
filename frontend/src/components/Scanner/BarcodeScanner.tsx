@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { BrowserMultiFormatReader } from '@zxing/browser'
+import { Html5Qrcode } from 'html5-qrcode'
 
 interface BarcodeScannerProps {
   onDetected: (barcode: string) => void
 }
 
 const DEBOUNCE_MS = 3000
+const SCANNER_DIV_ID = 'html5qr-barcode-scanner'
 
 function playBeep() {
   try {
@@ -29,85 +30,50 @@ function playBeep() {
 }
 
 export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null)
+  const scannerRef = useRef<Html5Qrcode | null>(null)
   const seenRef = useRef<Map<string, number>>(new Map())
   const [flash, setFlash] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const controlsRef = useRef<{ stop: () => void } | null>(null)
 
   useEffect(() => {
-    let cancelled = false
+    const scanner = new Html5Qrcode(SCANNER_DIV_ID)
+    scannerRef.current = scanner
 
-    async function startScanner() {
-      if (!videoRef.current) return
-
-      try {
-        const reader = new BrowserMultiFormatReader()
-        readerRef.current = reader
-
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices()
-        // Prefer a rear camera on mobile
-        const deviceId =
-          devices.find((d) => /back|rear|environment/i.test(d.label))?.deviceId ??
-          devices[0]?.deviceId
-
-        const controls = await reader.decodeFromVideoDevice(
-          deviceId,
-          videoRef.current,
-          (result, err) => {
-            if (cancelled) return
-            if (!result) return
-            if (err) return
-
-            const barcode = result.getText()
-            const now = Date.now()
-            const lastSeen = seenRef.current.get(barcode)
-
-            if (lastSeen && now - lastSeen < DEBOUNCE_MS) return
-
-            seenRef.current.set(barcode, now)
-            playBeep()
-            setFlash(true)
-            setTimeout(() => setFlash(false), 300)
-            onDetected(barcode)
-          },
+    scanner
+      .start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 280, height: 120 } },
+        (decodedText) => {
+          const now = Date.now()
+          const lastSeen = seenRef.current.get(decodedText)
+          if (lastSeen && now - lastSeen < DEBOUNCE_MS) return
+          seenRef.current.set(decodedText, now)
+          playBeep()
+          setFlash(true)
+          setTimeout(() => setFlash(false), 300)
+          onDetected(decodedText)
+        },
+        () => {
+          // per-frame decode errors are normal — ignore
+        },
+      )
+      .catch((e: unknown) => {
+        setError(
+          e instanceof Error
+            ? e.message
+            : 'Camera access denied or not available.',
         )
-
-        if (!cancelled) {
-          controlsRef.current = controls
-        } else {
-          controls.stop()
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(
-            e instanceof Error
-              ? e.message
-              : 'Camera access denied or not available.',
-          )
-        }
-      }
-    }
-
-    startScanner()
+      })
 
     return () => {
-      cancelled = true
-      controlsRef.current?.stop()
-      controlsRef.current = null
+      scannerRef.current?.stop().catch(() => {})
+      scannerRef.current = null
     }
   }, [onDetected])
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl bg-black aspect-[3/4] max-h-[60vh]">
-      <video
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        playsInline
-        muted
-        autoPlay
-      />
+      <div id={SCANNER_DIV_ID} className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover" />
 
       {/* Scan-frame overlay */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
