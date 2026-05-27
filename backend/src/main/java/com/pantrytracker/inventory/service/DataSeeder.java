@@ -25,8 +25,8 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.count() > 0) {
-            log.info("Users exist — skipping seed");
+        if (userRepository.existsByUsername(seedUsername)) {
+            log.info("Seed user '{}' already exists — skipping", seedUsername);
             return;
         }
 
