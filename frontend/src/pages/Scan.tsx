@@ -174,9 +174,12 @@ export default function Scan() {
           console.log('[Scan] barcode lookup result:', existingByBarcode ?? null)
 
           if (existingByBarcode) {
-            console.log(`[Scan] Barcode ${staged.barcode} matched existing item "${existingByBarcode.name}" (id: ${existingByBarcode.id}, qty: ${existingByBarcode.quantity}) → incrementing by ${staged.quantity}`)
+            console.log(`[Scan] Barcode ${staged.barcode} matched existing item "${existingByBarcode.name}" (id: ${existingByBarcode.id}, qty: ${existingByBarcode.quantity}, level: ${existingByBarcode.consumptionLevel}) → incrementing by ${staged.quantity}`)
             return updateItem(existingByBarcode.id, {
               ...existingByBarcode,
+              consumptionLevel: existingByBarcode.consumptionLevel === 0
+                ? 1.0
+                : existingByBarcode.consumptionLevel,
               quantity: existingByBarcode.quantity + staged.quantity,
             })
           }

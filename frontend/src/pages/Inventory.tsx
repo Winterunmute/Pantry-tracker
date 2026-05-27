@@ -152,7 +152,7 @@ function QuickUpdateModal({
 
 function ItemTile({ group, onTap }: { group: NameGroup; onTap: () => void }) {
   const level = group.items[0].consumptionLevel ?? 1
-  const count = group.items.length
+  const count = group.items.reduce((sum, i) => sum + (i.quantity ?? 1), 0)
 
   return (
     <button
