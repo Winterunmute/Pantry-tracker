@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { getExpiringItems } from '../../api/inventory'
 
 const links = [
@@ -12,6 +13,15 @@ const links = [
 ]
 
 export default function Navbar() {
+  const navigate = useNavigate()
+  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('accessToken'))
+
+  useEffect(() => {
+    const check = () => setLoggedIn(!!localStorage.getItem('accessToken'))
+    window.addEventListener('storage', check)
+    return () => window.removeEventListener('storage', check)
+  }, [])
+
   const { data: expiring = [] } = useQuery({
     queryKey: ['expiring'],
     queryFn: getExpiringItems,
@@ -23,6 +33,13 @@ export default function Navbar() {
     const days = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     return days >= 0 && days <= 3
   }).length
+
+  function handleLogout() {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    setLoggedIn(false)
+    navigate('/')
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:static md:border-t-0 md:border-b md:mb-4">
@@ -53,6 +70,32 @@ export default function Navbar() {
             </NavLink>
           </li>
         ))}
+        <li className="flex-1 md:flex-none">
+          {loggedIn ? (
+            <button
+              onClick={handleLogout}
+              className="flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-xs font-medium min-h-[48px] text-gray-500 hover:text-red-500 transition-colors md:flex-row md:gap-2 md:text-sm md:rounded-md md:px-4 md:hover:bg-red-50"
+            >
+              <span className="text-lg leading-none md:text-base">🚪</span>
+              <span>Logout</span>
+            </button>
+          ) : (
+            <NavLink
+              to="/login"
+              className={({ isActive }) =>
+                [
+                  'flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-xs font-medium transition-colors min-h-[48px] md:flex-row md:gap-2 md:text-sm md:rounded-md md:px-4',
+                  isActive
+                    ? 'text-brand-600 md:bg-brand-50'
+                    : 'text-gray-500 hover:text-brand-600 md:hover:bg-gray-100',
+                ].join(' ')
+              }
+            >
+              <span className="text-lg leading-none md:text-base">🔑</span>
+              <span>Login</span>
+            </NavLink>
+          )}
+        </li>
       </ul>
     </nav>
   )

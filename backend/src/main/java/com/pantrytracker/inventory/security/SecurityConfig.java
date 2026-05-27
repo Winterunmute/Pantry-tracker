@@ -40,10 +40,8 @@ public class SecurityConfig {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             .authorizeHttpRequests(auth -> auth
-                    // TODO: to enable auth enforcement replace this line with:
-                    // .requestMatchers("/api/auth/**", "/api/deals").permitAll()
-                    // .anyRequest().authenticated()
-                    .anyRequest().permitAll())
+                    .requestMatchers("/api/auth/**", "/api/deals").permitAll()
+                    .anyRequest().authenticated())
 
             // Plug in the JWT filter before the username/password filter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
