@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { login } from '../api/auth'
+import { login, register } from '../api/auth'
 
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [isRegister, setIsRegister] = useState(false)
   const navigate = useNavigate()
 
   const mutation = useMutation({
-    mutationFn: login,
+    mutationFn: isRegister ? register : login,
     onSuccess: (data) => {
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
@@ -30,7 +31,9 @@ export default function Login() {
         <div className="text-center">
           <p className="text-5xl mb-3">🥫</p>
           <h1 className="text-2xl font-bold text-gray-900">Pantry Tracker</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {isRegister ? 'Create a new account' : 'Sign in to your account'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,7 +71,7 @@ export default function Login() {
 
           {mutation.isError && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">
-              Invalid username or password.
+              {isRegister ? 'Failed to create account.' : 'Invalid username or password.'}
             </p>
           )}
 
@@ -77,7 +80,15 @@ export default function Login() {
             disabled={mutation.isPending || !username.trim() || !password}
             className="w-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 disabled:bg-gray-300 text-white font-semibold rounded-xl py-4 transition-colors min-h-[56px]"
           >
-            {mutation.isPending ? 'Signing in…' : 'Sign In'}
+            {mutation.isPending ? 'Please wait…' : isRegister ? 'Create Account' : 'Sign In'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setIsRegister(!isRegister); mutation.reset() }}
+            className="w-full text-sm text-gray-500 hover:text-brand-600 transition-colors py-2"
+          >
+            {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
           </button>
         </form>
       </div>
