@@ -69,7 +69,11 @@ export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
       })
 
     return () => {
-      scannerRef.current?.stop().catch(() => {})
+      try {
+        scannerRef.current?.stop().catch(() => {})
+      } catch {
+        // Scanner may already be stopped
+      }
       scannerRef.current = null
     }
   }, [onDetected])
