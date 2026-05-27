@@ -214,6 +214,7 @@ export default function Scan() {
       const shoppingList = await getShoppingList()
       const alreadyMatched = new Set<string>()
       const removedNames: string[] = []
+      const deStaplePromises: Promise<void>[] = []
 
       for (const staged of stagingItems) {
         for (const shopItem of shoppingList) {
@@ -221,16 +222,18 @@ export default function Scan() {
           if (namesMatch(staged.productName, shopItem.name ?? '')) {
             alreadyMatched.add(shopItem.id)
             removedNames.push(shopItem.name ?? staged.productName)
-            // Mark old item as non-staple so it exits the shopping list — don't restore its level
-            updateItem(shopItem.id, { ...shopItem, isStaple: false })
-              .then(() => {
-                queryClient.invalidateQueries({ queryKey: ['shopping-list'] })
-                queryClient.invalidateQueries({ queryKey: ['inventory'] })
-              })
-              .catch(() => {})
+            deStaplePromises.push(
+              updateItem(shopItem.id, { ...shopItem, isStaple: false }).then(() => {}),
+            )
             break
           }
         }
+      }
+
+      if (deStaplePromises.length > 0) {
+        await Promise.all(deStaplePromises)
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] })
+        queryClient.invalidateQueries({ queryKey: ['inventory'] })
       }
 
       setStagingItems([])

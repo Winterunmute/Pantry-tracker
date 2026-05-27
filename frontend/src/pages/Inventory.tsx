@@ -67,6 +67,13 @@ function QuickUpdateModal({
   const [flashMsg, setFlashMsg] = useState<string | null>(null)
 
   function handleLevelSelect(value: number) {
+    if (value === 0 && item.quantity > 1) {
+      onUpdate({ quantity: item.quantity - 1, consumptionLevel: 1.0 })
+      const remaining = item.quantity - 1
+      setFlashMsg(`📦 Package finished — ${remaining} remaining`)
+      setTimeout(onClose, 1300)
+      return
+    }
     onUpdate({ consumptionLevel: value })
     if (value === 0) {
       const hasNextPackage = siblings.some((s) => (s.consumptionLevel ?? 1) > 0)
