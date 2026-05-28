@@ -271,7 +271,7 @@ def main_content(S):
         "spårbarhet och säkerhet är en miljö jag trivs i och förstår inifrån. Idag kombinerar jag "
         "den erfarenheten med modern Java-utveckling och produktionsnära systemarbete från "
         "YH-utbildningen på Nackademin samt LIA hos 56N Software AB. Under LIA-praktiken arbetade "
-        "jag nära både verksamhet och utveckling i en Spring Boot-baserad AI/SaaS-plattform. "
+        "jag nära både verksamhet och utveckling i en Spring Boot-baserad plattform. "
         "Jag bidrog inom områden som CI/CD, deploymentflöden, loggning, monitorering, "
         "dokumentation och teknisk koordinering samt identifierade och eskalerade säkerhets- "
         "och compliance-risker i produktionsmiljö. Min styrka är kombinationen av "
@@ -442,18 +442,20 @@ def main_content(S):
         ),
     ]))
 
-    # PROJEKT
-    items.append(Spacer(1, 2))
+    # PROJEKT — page break so section starts at top of page 2 main column
+    from reportlab.platypus import PageBreak, FrameBreak
+    items.append(PageBreak())   # fills main frame on page 1 → moves to sidebar frame on page 2
+    items.append(FrameBreak())  # skips empty sidebar on page 2 → lands in main frame on page 2
     items.append(Paragraph("PROJEKT", S["section"]))
     items.append(HRFlowable(width="100%", thickness=0.5, color=LIGHT_RULE, spaceAfter=4))
 
     items.append(KeepTogether([
         Paragraph(
-            "Pantry Tracker — Examensarbete (Java / Spring Boot) · 2026",
+            "Pantry Tracker — Examensarbete (Java / Spring Boot) – 2026",
             S["proj_title"]
         ),
         Paragraph(
-            "Fullstack-applikation för hushållsinventering, byggd med moderna Java-teknologier.",
+            "Fullstack-applikation för hushållsinventering, byggd med moderna Java-tekniker.",
             S["body"]
         ),
         Paragraph(
@@ -479,7 +481,7 @@ def main_content(S):
 
     items.append(KeepTogether([
         Paragraph(
-            "Hydroponicraft — NeoForge Minecraft-mod (Java) · Aktiv",
+            "Hydroponicraft — NeoForge Minecraft-mod (Java) – Aktiv",
             S["proj_title"]
         ),
         Paragraph(
