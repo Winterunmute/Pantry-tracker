@@ -442,10 +442,9 @@ def main_content(S):
         ),
     ]))
 
-    # PROJEKT — page break so section starts at top of page 2 main column
-    from reportlab.platypus import PageBreak, FrameBreak
-    items.append(PageBreak())   # fills main frame on page 1 → moves to sidebar frame on page 2
-    items.append(FrameBreak())  # skips empty sidebar on page 2 → lands in main frame on page 2
+    # PROJEKT — explicit page break; NextPageTemplate("p2") ensures we land in main frame
+    from reportlab.platypus import PageBreak
+    items.append(PageBreak())
     items.append(Paragraph("PROJEKT", S["section"]))
     items.append(HRFlowable(width="100%", thickness=0.5, color=LIGHT_RULE, spaceAfter=4))
 
@@ -523,6 +522,7 @@ def build_pdf(output_path):
         bottomMargin=0,
     )
 
+    # Page 1: sidebar frame + main frame (two columns)
     sidebar_frame = Frame(
         SIDEBAR_X + INNER_PAD,
         MARGIN_BOTTOM,
@@ -532,7 +532,6 @@ def build_pdf(output_path):
         topPadding=0, bottomPadding=0,
         id="sidebar",
     )
-
     main_frame = Frame(
         MAIN_X,
         MARGIN_BOTTOM,
@@ -542,21 +541,42 @@ def build_pdf(output_path):
         topPadding=0, bottomPadding=0,
         id="main",
     )
-
-    template = PageTemplate(
-        id="two_col",
+    template_p1 = PageTemplate(
+        id="p1",
         frames=[sidebar_frame, main_frame],
         onPage=draw_sidebar_bg,
     )
-    doc.addPageTemplates([template])
+
+    # Page 2+: single main frame only (sidebar background still drawn via onPage)
+    main_frame_p2 = Frame(
+        MAIN_X,
+        MARGIN_BOTTOM,
+        MAIN_W - INNER_PAD,
+        PAGE_H - MARGIN_TOP - MARGIN_BOTTOM,
+        leftPadding=0, rightPadding=0,
+        topPadding=0, bottomPadding=0,
+        id="main_p2",
+    )
+    template_p2 = PageTemplate(
+        id="p2",
+        frames=[main_frame_p2],
+        onPage=draw_sidebar_bg,
+    )
+
+    doc.addPageTemplates([template_p1, template_p2])
 
     S = make_styles()
 
-    # Sidebar flows into frame 1, then main content into frame 2.
-    # Use FrameBreak to separate them.
-    from reportlab.platypus import FrameBreak
+    from reportlab.platypus import FrameBreak, NextPageTemplate
 
-    story = sidebar_content(S) + [FrameBreak()] + main_content(S)
+    story = (
+        sidebar_content(S)
+        + [FrameBreak()]
+        # Switch all subsequent pages to single-column (p2) template so that
+        # any overflow and the explicit PageBreak land in the main frame only.
+        + [NextPageTemplate("p2")]
+        + main_content(S)
+    )
 
     doc.build(story)
     print(f"Generated: {output_path}")
